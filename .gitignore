@@ -10,5 +10,7 @@ vite.config.ts.timestamp-*
 SECRET_CONFIG
 .idea
 !.env.ci
-!.env
-gcp-*.json
+.env
+Dockerfile
+entrypoint.sh
+
