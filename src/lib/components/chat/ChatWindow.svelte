@@ -213,7 +213,7 @@
 		...(!$page.data?.assistant && currentModel.tools
 			? activeTools.flatMap((tool: ToolFront) => tool.mimeTypes ?? [])
 			: []),
-		...(currentModel.multimodal ? ["image/*"] : []),
+		...(currentModel.multimodal ? ["image/*", "application/pdf"] : []),
 	];
 
 	$: isFileUploadEnabled = activeMimeTypes.length > 0;

@@ -12,3 +12,5 @@ SECRET_CONFIG
 !.env.ci
 !.env
 gcp-*.json
+sa.json
+static/bahlsen

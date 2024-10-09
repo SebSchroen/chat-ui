@@ -9,15 +9,19 @@ import type { Endpoint } from "../endpoints";
 import { z } from "zod";
 import type { Message } from "$lib/types/Message";
 import type { TextGenerationStreamOutput } from "@huggingface/inference";
-import { createImageProcessorOptionsValidator, makeImageProcessor } from "../images";
+import { createImageProcessorOptionsValidator, makeImageProcessorVertex } from "../images";
+
+const DEFAULT_PROJECT_ID = "your-default-project";
+
+const googleCloudProject = process.env.GCP_PROJECT || DEFAULT_PROJECT_ID;
 
 export const endpointVertexParametersSchema = z.object({
 	weight: z.number().int().positive().default(1),
 	model: z.any(), // allow optional and validate against emptiness
 	type: z.literal("vertex"),
-	location: z.string().default("europe-west1"),
+	location: z.string().default("europe-west3"),
 	extraBody: z.object({ model_version: z.string() }).optional(),
-	project: z.string(),
+	project: z.string().default(googleCloudProject),
 	apiEndpoint: z.string().optional(),
 	safetyThreshold: z
 		.enum([
@@ -39,6 +43,7 @@ export const endpointVertexParametersSchema = z.object({
 					"image/avif",
 					"image/tiff",
 					"image/gif",
+					"application/pdf",
 				],
 				preferredMimeType: "image/webp",
 				maxSizeInMB: Infinity,
@@ -108,7 +113,7 @@ export function endpointVertex(input: z.input<typeof endpointVertexParametersSch
 
 		const vertexMessages = await Promise.all(
 			messages.map(async ({ from, content, files }: Omit<Message, "id">): Promise<Content> => {
-				const imageProcessor = makeImageProcessor(multimodal.image);
+				const imageProcessor = makeImageProcessorVertex(multimodal.image);
 				const processedFiles =
 					files && files.length > 0
 						? await Promise.all(files.map(async (file) => imageProcessor(file)))

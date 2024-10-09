@@ -87,6 +87,62 @@ export function makeImageProcessor<TMimeType extends string = string>(
 		return { image: processedImage, mime: outputMime };
 	};
 }
+export function makeImageProcessorVertex<TMimeType extends string = string>(
+	options: ImageProcessorOptions<TMimeType>
+): ImageProcessor<TMimeType> {
+	return async (file) => {
+		const { supportedMimeTypes, preferredMimeType, maxSizeInMB, maxWidth, maxHeight } = options;
+		const { mime, value } = file;
+		// Handle PDF files
+		if (mime === "application/pdf") {
+			const buffer = Buffer.from(value, "base64");
+			const processedImage = buffer;
+			return { image: processedImage, mime };
+		}
+
+		// Handle image files
+		const buffer = Buffer.from(value, "base64");
+		let sharpInst = sharp(buffer);
+
+		const metadata = await sharpInst.metadata();
+		if (!metadata) throw Error("Failed to read image metadata");
+		const { width, height } = metadata;
+		if (width === undefined || height === undefined) throw Error("Failed to read image size");
+
+		const tooLargeInSize = width > maxWidth || height > maxHeight;
+		const tooLargeInBytes = buffer.byteLength > maxSizeInMB * 1000 * 1000;
+
+		const outputMime = chooseMimeType(supportedMimeTypes, preferredMimeType, mime, {
+			preferSizeReduction: tooLargeInBytes,
+		});
+
+		// Resize if necessary
+		if (tooLargeInSize || tooLargeInBytes) {
+			const size = chooseImageSize({
+				mime: outputMime,
+				width,
+				height,
+				maxWidth,
+				maxHeight,
+				maxSizeInMB,
+			});
+			if (size.width !== width || size.height !== height) {
+				sharpInst = resizeImage(sharpInst, size.width, size.height);
+			}
+		}
+
+		// Convert format if necessary
+		// We always want to convert the image when the file was too large in bytes
+		// so we can guarantee that ideal options are used, which are expected when
+		// choosing the image size
+		if (outputMime !== mime || tooLargeInBytes) {
+			sharpInst = convertImage(sharpInst, outputMime);
+		}
+
+		const processedImage = await sharpInst.toBuffer();
+		return { image: processedImage, mime: outputMime };
+	};
+}
 
 const outputFormats = ["png", "jpeg", "webp", "avif", "tiff", "gif"] as const;
 type OutputImgFormat = (typeof outputFormats)[number];
