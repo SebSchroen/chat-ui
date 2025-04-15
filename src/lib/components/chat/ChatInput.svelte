@@ -38,6 +38,7 @@
 		assistant?: Assistant | undefined;
 		modelHasTools?: boolean;
 		modelIsMultimodal?: boolean;
+		historyHasFiles?: boolean; // Add new prop
 		children?: import("svelte").Snippet;
 		onPaste?: (e: ClipboardEvent) => void;
 	}
@@ -52,6 +53,7 @@
 		assistant = undefined,
 		modelHasTools = false,
 		modelIsMultimodal = false,
+		historyHasFiles = false, // Add new prop with default
 		children,
 		onPaste,
 	}: Props = $props();
@@ -156,22 +158,14 @@
 				</HoverTooltip>
 			{/if}
 			{#if showGoogleSearch}
-				{@const isGoogleSearchDisabled = loading || files.length > 0}
-				<HoverTooltip label={files.length > 0 ? "Remove files to enable Google Search" : "Google Search"} position="top" TooltipClassNames="text-xs !text-left !w-auto whitespace-nowrap !py-1 !mb-0 max-sm:hidden">
+				{@const isGoogleSearchDisabled = loading || files.length > 0 || historyHasFiles}
+				<HoverTooltip label={(files.length > 0 || historyHasFiles) ? "Remove files or start a new chat to enable Google Search" : "Google Search"} position="top" TooltipClassNames="text-xs !text-left !w-auto whitespace-nowrap !py-1 !mb-0 max-sm:hidden">
 					<div class="flex h-8 items-center gap-2 rounded-lg border bg-gray-100 p-1.5 shadow-sm dark:border-gray-600 dark:bg-gray-700" class:cursor-pointer={!isGoogleSearchDisabled} class:opacity-50={isGoogleSearchDisabled} class:cursor-not-allowed={isGoogleSearchDisabled} aria-label="Google Search Toggle" role="switch" aria-checked={$webSearchParameters.googleSearchIsOn} aria-disabled={isGoogleSearchDisabled} tabindex={isGoogleSearchDisabled ? -1 : 0} onclick={() => { if (!isGoogleSearchDisabled) { webSearchParameters.update(params => ({...params, googleSearchIsOn: !params.googleSearchIsOn})); } }} onkeydown={(e) => { if (!isGoogleSearchDisabled && (e.key === 'Enter' || e.key === ' ')) { webSearchParameters.update(params => ({...params, googleSearchIsOn: !params.googleSearchIsOn})); } }}>
 						<Switch name="googleSearchIsOn" bind:checked={$webSearchParameters.googleSearchIsOn} /> 
 						<label for="googleSearchIsOn" class="whitespace-nowrap text-sm text-gray-800 dark:text-gray-200 flex items-center gap-1.5" class:cursor-pointer={!isGoogleSearchDisabled} class:cursor-not-allowed={isGoogleSearchDisabled}>
 							<IconGoogleG classNames="text-sm" /> Google Search
 						</label>
 					</div>
-				</HoverTooltip>
-			{/if}
-			{#if showImageGen}
-				<HoverTooltip label="Generate images" position="top" TooltipClassNames="text-xs !text-left !w-auto whitespace-nowrap !py-1 !mb-0 max-sm:hidden {imageGenIsOn ? 'hidden' : ''}">
-					<button class="base-tool" class:active-tool={imageGenIsOn} disabled={loading} onclick={async (e) => { e.preventDefault(); if (modelHasTools) { if (imageGenIsOn) { await settings.instantSet({ tools: ($settings.tools ?? []).filter((t) => t !== imageGenToolId) }); } else { await settings.instantSet({ tools: [...($settings.tools ?? []), imageGenToolId] }); } } }}>
-						<IconImageGen classNames="text-xl" />
-						{#if imageGenIsOn} Image Gen {/if}
-					</button>
 				</HoverTooltip>
 			{/if}
 			{#if showFileUpload}
@@ -194,16 +188,24 @@
 					</HoverTooltip>
 				{/if}
 			{/if}
+			{#if showImageGen}
+				<HoverTooltip label="Generate images" position="top" TooltipClassNames="text-xs !text-left !w-auto whitespace-nowrap !py-1 !mb-0 max-sm:hidden {imageGenIsOn ? 'hidden' : ''}">
+					<button class="base-tool" class:active-tool={imageGenIsOn} disabled={loading} onclick={async (e) => { e.preventDefault(); if (modelHasTools) { if (imageGenIsOn) { await settings.instantSet({ tools: ($settings.tools ?? []).filter((t) => t !== imageGenToolId) }); } else { await settings.instantSet({ tools: [...($settings.tools ?? []), imageGenToolId] }); } } }}>
+						<IconImageGen classNames="text-xl" />
+						{#if imageGenIsOn} Image Gen {/if}
+					</button>
+				</HoverTooltip>
+			{/if}
 			{#if showExtraTools}
 				{#each extraTools as tool}
 					<button class="active-tool base-tool" disabled={loading} onclick={async (e) => { e.preventDefault(); goto(`${base}/tools/${tool._id}`); }}>
 						{#key tool.icon + tool.color} <ToolLogo icon={tool.icon} color={tool.color} size="xs" /> {/key} {tool.displayName}
 					</button>
 				{/each}
-				<HoverTooltip label="Browse more tools" position="right" TooltipClassNames="text-xs !text-left !w-auto whitespace-nowrap !py-1 max-sm:hidden">
-					<a class="base-tool flex !size-[20px] items-center justify-center rounded-full border !border-gray-200 !bg-white !transition-none dark:!border-gray-500 dark:!bg-transparent" href={`${base}/tools`} title="Browse more tools">
-						<IconAdd class="text-sm" />
-					</a>
+					<HoverTooltip label="Browse more tools" position="right" TooltipClassNames="text-xs !text-left !w-auto whitespace-nowrap !py-1 !mb-0 max-sm:hidden">
+						<a class="base-tool flex !size-[20px] items-center justify-center rounded-full border !border-gray-200 !bg-white !transition-none dark:!border-gray-500 dark:!bg-transparent" href={`${base}/tools`} title="Browse more tools">
+							<IconAdd class="text-sm" />
+						</a>
 				</HoverTooltip>
 			{/if}
 		</div>

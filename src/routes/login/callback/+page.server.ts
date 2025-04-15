@@ -56,10 +56,21 @@ export async function load({ url, locals, cookies, request, getClientAddress }) 
 		iss
 	);
 
-	const groupMembership = await checkTransitiveMembership(env.GROUP_ID, userData.email);
-	if (!groupMembership.isMember) {
-		error(403, "User not allowed");
+	const groupMembership = await checkTransitiveMembership(env.GROUP_ID, userData.email ?? ""); // Ensure email is not undefined
+
+	// Check if the membership check failed (returned null due to API error/permissions)
+	if (groupMembership === null) {
+		error(
+			500,
+			"Failed to check group membership due to a server configuration issue. Please check application logs and Google Cloud permissions."
+		);
 	}
+
+	// Now safely check the isMember property
+	if (!groupMembership.isMember) {
+		error(403, "User is not a member of the required group.");
+	}
+
 	// Filter by allowed user emails or domains
 	if (allowedUserEmails.length > 0 || allowedUserDomains.length > 0) {
 		if (!userData.email) {

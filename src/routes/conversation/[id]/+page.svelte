@@ -460,6 +460,9 @@
 	let messagesPath = $derived(createMessagesPath(messages));
 	let messagesAlternatives = $derived(createMessagesAlternatives(messages));
 
+	// Check if any message in the current path has files
+	let historyHasFiles = $derived(messagesPath.some((msg) => msg.files && msg.files.length > 0));
+
 	$effect(() => {
 		if (browser && messagesPath.at(-1)?.id) {
 			localStorage.setItem("leafId", messagesPath.at(-1)?.id as string);
@@ -500,4 +503,5 @@
 	models={data.models}
 	currentModel={findCurrentModel([...data.models, ...data.oldModels], data.model)}
 	assistant={data.assistant}
+	historyHasFiles={historyHasFiles}
 />

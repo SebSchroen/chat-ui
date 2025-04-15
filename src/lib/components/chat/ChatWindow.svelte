@@ -50,6 +50,7 @@
 		assistant?: Assistant | undefined;
 		preprompt?: string | undefined;
 		files?: File[];
+		historyHasFiles?: boolean; // Add new prop
 	}
 
 	let {
@@ -63,6 +64,7 @@
 		assistant = undefined,
 		preprompt = undefined,
 		files = $bindable([]),
+		historyHasFiles = false, // Add new prop with default
 	}: Props = $props();
 
 	let isReadOnly = $derived(!models.some((model) => model.id === currentModel.id));
@@ -432,6 +434,7 @@
 								disabled={isReadOnly || lastIsError}
 								modelHasTools={currentModel.tools}
 								modelIsMultimodal={currentModel.multimodal}
+								{historyHasFiles}
 							/>
 						{/if}
 

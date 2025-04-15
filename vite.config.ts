@@ -26,7 +26,8 @@ export default defineConfig({
 		loadTTFAsArrayBuffer(),
 	],
 	optimizeDeps: {
-		include: ["uuid", "@huggingface/transformers", "sharp", "@gradio/client"],
+		include: ["uuid", "@huggingface/transformers", "@gradio/client"], // Removed sharp
+		exclude: ["sharp"], // Added sharp here
 	},
 	server: {
 		open: "/",
