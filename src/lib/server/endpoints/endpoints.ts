@@ -42,6 +42,7 @@ export interface EndpointParameters {
 	tools?: Tool[];
 	toolResults?: ToolResult[];
 	isMultimodal?: boolean;
+	googleSearchIsOn?: boolean; // Added for passing state to endpoint
 	conversationId?: ObjectId;
 }
 

@@ -14,7 +14,16 @@ import { logger } from "../logger";
 type GenerateContext = Omit<TextGenerationContext, "messages"> & { messages: EndpointMessage[] };
 
 export async function* generate(
-	{ model, endpoint, conv, messages, assistant, isContinue, promptedAt }: GenerateContext,
+	{
+		model,
+		endpoint,
+		conv,
+		messages,
+		assistant,
+		isContinue,
+		promptedAt,
+		googleSearchIsOn,
+	}: GenerateContext, // Added googleSearchIsOn here
 	toolResults: ToolResult[],
 	preprompt?: string,
 	tools?: Tool[]
@@ -50,6 +59,7 @@ export async function* generate(
 		tools,
 		toolResults,
 		isMultimodal: model.multimodal,
+		googleSearchIsOn, // Pass it to the endpoint
 		conversationId: conv._id,
 	})) {
 		// text generation completed

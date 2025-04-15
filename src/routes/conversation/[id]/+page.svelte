@@ -259,7 +259,9 @@
 					messageId,
 					isRetry,
 					isContinue,
-					webSearch: !hasAssistant && !activeModel.tools && $webSearchParameters.useSearch,
+					// Pass both search states from the store
+					webSearch: !hasAssistant && !activeModel.tools && $webSearchParameters.useSearch, 
+					googleSearchIsOn: !hasAssistant && $webSearchParameters.googleSearchIsOn, // Pass googleSearchIsOn state
 					tools: $settings.tools, // preference for tools
 					files: isRetry ? userMessage?.files : base64Files,
 				},

@@ -12,6 +12,7 @@ export interface TextGenerationContext {
 	assistant?: Pick<Assistant, "rag" | "dynamicPrompt" | "generateSettings" | "tools">;
 	isContinue: boolean;
 	webSearch: boolean;
+	googleSearchIsOn?: boolean; // Added for Google Search toggle state
 	toolsPreference: Array<string>;
 	promptedAt: Date;
 	ip: string;

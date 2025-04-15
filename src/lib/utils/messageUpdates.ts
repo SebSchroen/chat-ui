@@ -49,6 +49,7 @@ type MessageUpdateRequestOptions = {
 	isRetry: boolean;
 	isContinue: boolean;
 	webSearch: boolean;
+	googleSearchIsOn?: boolean; // Added google search state
 	tools?: Array<string>;
 	files?: MessageFile[];
 };
@@ -68,6 +69,7 @@ export async function fetchMessageUpdates(
 		is_retry: opts.isRetry,
 		is_continue: opts.isContinue,
 		web_search: opts.webSearch,
+		google_search_is_on: opts.googleSearchIsOn, // Added to JSON payload
 		tools: opts.tools,
 	});
 

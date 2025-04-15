@@ -14,6 +14,8 @@ import type { Cookies } from "@sveltejs/kit";
 import { collections } from "$lib/server/database";
 import JSON5 from "json5";
 import { logger } from "$lib/server/logger";
+import { GoogleAuth } from "google-auth-library";
+import { google } from "googleapis";
 
 export interface OIDCSettings {
 	redirectURI: string;
@@ -174,4 +176,49 @@ export async function validateAndParseCsrfToken(
 		logger.error(e);
 	}
 	return null;
+}
+
+export interface MembershipStatus {
+	isMember: boolean;
+}
+
+export async function checkTransitiveMembership(
+	groupId: string,
+	memberId: string
+): Promise<MembershipStatus | null> {
+	try {
+		// It's generally recommended to use Application Default Credentials (ADC) for authentication in production.
+		// This simplifies deployment and avoids hardcoding credentials.  See: https://cloud.google.com/docs/authentication/production
+		const auth = new GoogleAuth({
+			scopes: ["https://www.googleapis.com/auth/cloud-identity.groups.readonly"],
+		});
+		const authClient = await auth.getClient();
+		const cloudidentity = google.cloudidentity("v1");
+
+		const parent = `groups/${groupId}`;
+		const query = `member_key_id == '${memberId}'`;
+
+		try {
+			const res = await cloudidentity.groups.memberships.checkTransitiveMembership(
+				{
+					parent, // auth: authClient is implied with ADC and this simpler form
+					query,
+				},
+				{ auth: authClient }
+			); // Provide authClient explicitly if not using ADC
+
+			// Use a clearer return type and boolean for isMember
+			return { isMember: res.data.hasMembership || false }; // Handle potential undefined case
+		} catch (apiError) {
+			// Use more specific error handling based on the error type if available (e.g., apiError.code)
+			console.error(
+				`Error checking transitive membership for group ${groupId} and member ${memberId}:`,
+				apiError
+			);
+			return null;
+		}
+	} catch (setupError) {
+		console.error("Error setting up checkTransitiveMembership:", setupError);
+		return null;
+	}
 }

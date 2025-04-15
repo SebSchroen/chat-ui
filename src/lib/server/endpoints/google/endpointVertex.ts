@@ -10,6 +10,8 @@ import { z } from "zod";
 import type { Message } from "$lib/types/Message";
 import { createImageProcessorOptionsValidator, makeImageProcessor } from "../images";
 import { createDocumentProcessorOptionsValidator, makeDocumentProcessor } from "../document";
+// Removed store imports: import { get } from "svelte/store";
+// Removed store imports: import { webSearchParameters } from "$lib/stores/webSearchParameters";
 
 export const endpointVertexParametersSchema = z.object({
 	weight: z.number().int().positive().default(1),
@@ -63,7 +65,8 @@ export function endpointVertex(input: z.input<typeof endpointVertexParametersSch
 		apiEndpoint,
 	});
 
-	return async ({ messages, preprompt, generateSettings }) => {
+	// Update function signature to accept googleSearchIsOn from params
+	return async ({ messages, preprompt, generateSettings, googleSearchIsOn }) => {
 		const parameters = { ...model.parameters, ...generateSettings };
 
 		const hasFiles = messages.some((message) => message.files && message.files.length > 0);
@@ -151,8 +154,30 @@ export function endpointVertex(input: z.input<typeof endpointVertexParametersSch
 			})
 		);
 
+		// Removed reading from store and console.log
+		// Use the passed-in googleSearchIsOn parameter directly
+		const isGoogleSearchEnabled = googleSearchIsOn ?? false;
+
+		// Define the Google Search tool object
+		const googleSearchRetrievalTool = {
+			googleSearchRetrieval: {
+				disableAttribution: false, // As per documentation example
+			},
+		};
+
+		// Determine the final tools array for the generateContentStream call
+		const functionCallingTools = !hasFiles ? tools : undefined; // Function calling tools only if no files
+		let finalTools = functionCallingTools; // Start with function calling tools (if any)
+
+		// Add Google Search tool ONLY if it's enabled AND there are NO files
+		if (isGoogleSearchEnabled && !hasFiles) {
+			// Ensure finalTools is an array before trying to spread into it
+			finalTools = [...(finalTools ?? []), googleSearchRetrievalTool];
+		}
+
 		const result = await generativeModel.generateContentStream({
 			contents: vertexMessages,
+			tools: finalTools, // Pass the conditional tools array here
 			systemInstruction: systemMessage
 				? {
 						role: "system",

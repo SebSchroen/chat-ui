@@ -148,6 +148,7 @@ export async function POST({ request, locals, params, getClientAddress }) {
 		is_retry: isRetry,
 		is_continue: isContinue,
 		web_search: webSearch,
+		google_search_is_on: googleSearchIsOn, // Destructure the new value
 		tools: toolsPreferences,
 	} = z
 		.object({
@@ -161,6 +162,7 @@ export async function POST({ request, locals, params, getClientAddress }) {
 			is_retry: z.optional(z.boolean()),
 			is_continue: z.optional(z.boolean()),
 			web_search: z.optional(z.boolean()),
+			google_search_is_on: z.optional(z.boolean()), // Added to Zod schema
 			tools: z.array(z.string()).optional(),
 			files: z.optional(
 				z.array(
@@ -448,9 +450,10 @@ export async function POST({ request, locals, params, getClientAddress }) {
 					endpoint: await model.getEndpoint(),
 					conv,
 					messages: messagesForPrompt,
-					assistant: undefined,
+					assistant: undefined, // Define assistant if needed
 					isContinue: isContinue ?? false,
 					webSearch: webSearch ?? false,
+					googleSearchIsOn: googleSearchIsOn ?? false, // Pass the value to context
 					toolsPreference: [
 						...(toolsPreferences ?? []),
 						...(hasPdfFiles || hasPdfInConversation ? [documentParserToolId] : []), // Add document parser tool if PDF files are present

@@ -1,5 +1,9 @@
 import { redirect, error } from "@sveltejs/kit";
-import { getOIDCUserData, validateAndParseCsrfToken } from "$lib/server/auth";
+import {
+	getOIDCUserData,
+	validateAndParseCsrfToken,
+	checkTransitiveMembership,
+} from "$lib/server/auth";
 import { z } from "zod";
 import { base } from "$app/paths";
 import { updateUser } from "./updateUser";
@@ -52,6 +56,10 @@ export async function load({ url, locals, cookies, request, getClientAddress }) 
 		iss
 	);
 
+	const groupMembership = await checkTransitiveMembership(env.GROUP_ID, userData.email);
+	if (!groupMembership.isMember) {
+		error(403, "User not allowed");
+	}
 	// Filter by allowed user emails or domains
 	if (allowedUserEmails.length > 0 || allowedUserDomains.length > 0) {
 		if (!userData.email) {
